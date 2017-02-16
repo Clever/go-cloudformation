@@ -45,4 +45,9 @@ func (f GetAttFunc) String() *StringExpr {
 	return &StringExpr{Func: f}
 }
 
-var _ StringFunc = GetAttFunc{} // GetAttFunc must implement StringFunc
+func (f GetAttFunc) Integer() *IntegerExpr {
+	return &IntegerExpr{Func: f}
+}
+
+var _ StringFunc = GetAttFunc{}  // GetAttFunc must implement StringFunc
+var _ IntegerFunc = GetAttFunc{} // GetAttFunc must implement IntegerFunc
