@@ -37,7 +37,13 @@ func (tr *TemplateReference) Load() error {
 		doc.Find(".highlights li a").Each(func(i int, s *goquery.Selection) {
 			name := s.Text()
 			name = regexp.MustCompile("\\s+").ReplaceAllString(name, " ")
+			name = strings.TrimSpace(name)
 			href, _ := s.Attr("href")
+
+			// hack around documentation bug, reported 20 Sept 2016
+			if href == "aws-properties-ec2-networkaclentry-portrange.html" {
+				name = "EC2 NetworkAclEntry PortRange"
+			}
 			tr.Resources = append(tr.Resources, &Resource{Name: name, Href: href})
 
 		})
@@ -126,8 +132,8 @@ func (tr *TemplateReference) writeGo(w io.Writer) {
 		fmt.Fprintf(w, "\n")
 		if resource.IsTopLevelResource() {
 
-			fmt.Fprintf(w, "// ResourceType returns %s to implement the ResourceProperties interface\n", resource.Name)
-			fmt.Fprintf(w, "func (s %s) ResourceType() string {\n", resource.GoName())
+			fmt.Fprintf(w, "// CfnResourceType returns %s to implement the ResourceProperties interface\n", resource.Name)
+			fmt.Fprintf(w, "func (s %s) CfnResourceType() string {\n", resource.GoName())
 			fmt.Fprintf(w, "	return %q\n", resource.Name)
 			fmt.Fprintf(w, "}\n")
 			fmt.Fprintf(w, "\n")
@@ -214,8 +220,12 @@ func (r *Resource) Load() error {
 	// An element with the class 'variablelist' immediately preceeded by an
 	// element with the text "Properties" is what we're looking for.
 	doc.Find(".variablelist").Each(func(i int, varList *goquery.Selection) {
-		tileText := varList.Parent().Find(".titlepage").First().Text()
-		if tileText != "Properties" && tileText != "Parameters" {
+		tileText := strings.TrimSpace(varList.Parent().Find(".titlepage").First().Text())
+		switch tileText {
+		case "Properties":
+		case "Parameters":
+		case "Members":
+		default:
 			return
 		}
 
@@ -223,7 +233,7 @@ func (r *Resource) Load() error {
 		// name of the property, the following DD element contains information
 		// about it, including the type.
 		varList.Find("dl dt").Each(func(i int, dt *goquery.Selection) {
-			property := Property{Name: dt.Text()}
+			property := Property{Name: strings.TrimSpace(dt.Text())}
 
 			dd := dt.Next()
 
@@ -248,6 +258,12 @@ func (r *Resource) Load() error {
 					})
 				}
 			})
+
+			if property.Name == "Icmp" && property.TypeHref == "aws-properties-ec2-networkaclentry-portrange.html" {
+				property.Type = "EC2NetworkAclEntryIcmp"
+				property.TypeHref = "aws-properties-ec2-networkaclentry-icmp.html"
+			}
+
 			r.Properties = append(r.Properties, &property)
 		})
 	})
@@ -282,9 +298,15 @@ func (r *Resource) Load() error {
 	// the syntax of each property in the SyntaxExpression field of the corresponding
 	// property.
 	doc.Find(".programlisting").Each(func(i int, varList *goquery.Selection) {
-		if varList.Parent().Find(".titlepage").First().Text() != "Syntax" {
+		headlineText := varList.Parent().Find(".titlepage").First().Text()
+		if headlineText != "JSON" {
 			return
 		}
+		nextHeadlineText := varList.Parent().Parent().Find(".titlepage").First().Text()
+		if !strings.HasPrefix(nextHeadlineText, "Syntax") {
+			return
+		}
+
 		for _, line := range strings.Split(varList.Text(), "\n") {
 			if !strings.Contains(line, ":") {
 				continue
@@ -325,6 +347,15 @@ func (r *Resource) GoName() string {
 	if r.Name == "EC2 Network Interface Attachment" {
 		return "EC2NetworkInterfaceAttachmentType"
 	}
+
+	// There is an object named AWS::SNS::Subscription and an object named
+	// SNS Subscription. To avoid a duplication definition, we have to deconflict
+	// them here.
+	if r.Name == "Amazon SNS Subscription Property Type" {
+		return "SNSSubscriptionProperty"
+	}
+
+	// Note: If we find one more conflict, we should do something more clever here
 
 	return rv
 }
@@ -398,15 +429,21 @@ func (p *Property) GoType(tr *TemplateReference) string {
 			p.TypeName = "[UNKNOWN " + p.TypeHref + "]"
 		}
 	}
+
+	isMaybeList := false
+	if strings.HasPrefix(p.Type, "A list of") ||
+		strings.HasPrefix(p.Type, "List of") ||
+		strings.HasPrefix(p.Type, "list of") ||
+		strings.HasPrefix(p.SyntaxExpression, "[") {
+		isMaybeList = true
+	}
+
 	if p.TypeName != "" {
 		if p.Type == "AWS CloudFormation Resource Tags" {
 			return "[]ResourceTag"
 		}
 
-		if strings.HasPrefix(p.Type, "A list of") ||
-			strings.HasPrefix(p.Type, "List of") ||
-			strings.HasPrefix(p.Type, "list of") ||
-			strings.HasPrefix(p.SyntaxExpression, "[") {
+		if isMaybeList {
 			return p.TypeName + "List"
 		}
 
@@ -415,6 +452,9 @@ func (p *Property) GoType(tr *TemplateReference) string {
 
 	switch p.Type {
 	case "String":
+		if isMaybeList {
+			return "*StringListExpr"
+		}
 		return "*StringExpr"
 	case "List of strings":
 		return "*StringListExpr"

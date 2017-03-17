@@ -69,6 +69,14 @@ type Parameter struct {
 	ConstraintDescription string       `json:",omitempty"`
 }
 
+// OutputExport represents the name of the resource output that should
+// be used for cross stack references.
+//
+// See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/walkthrough-crossstackref.html
+type OutputExport struct {
+	Name Stringable `json:",omitempty"`
+}
+
 // Output represents a template output
 //
 // The optional Outputs section declares output values that you want to view from the
@@ -77,13 +85,14 @@ type Parameter struct {
 //
 // See http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/outputs-section-structure.html
 type Output struct {
-	Description string      `json:",omitempty"`
-	Value       interface{} `json:",omitempty"`
+	Description string        `json:",omitempty"`
+	Value       interface{}   `json:",omitempty"`
+	Export      *OutputExport `json:",omitempty"`
 }
 
 // ResourceProperties is an interface that is implemented by resource objects.
 type ResourceProperties interface {
-	ResourceType() string
+	CfnResourceType() string
 }
 
 // Resource represents a resource in a cloudformation template. It contains resource
@@ -95,6 +104,7 @@ type Resource struct {
 	DependsOn      []string
 	Metadata       map[string]interface{}
 	UpdatePolicy   *UpdatePolicy
+	Condition      string
 	Properties     ResourceProperties
 }
 
@@ -107,14 +117,16 @@ func (r Resource) MarshalJSON() ([]byte, error) {
 		DependsOn      []string               `json:",omitempty"`
 		Metadata       map[string]interface{} `json:",omitempty"`
 		UpdatePolicy   *UpdatePolicy          `json:",omitempty"`
+		Condition      string                 `json:",omitempty"`
 		Properties     ResourceProperties
 	}{
-		Type:           r.Properties.ResourceType(),
+		Type:           r.Properties.CfnResourceType(),
 		CreationPolicy: r.CreationPolicy,
 		DeletionPolicy: r.DeletionPolicy,
 		DependsOn:      r.DependsOn,
 		Metadata:       r.Metadata,
 		UpdatePolicy:   r.UpdatePolicy,
+		Condition:      r.Condition,
 		Properties:     r.Properties,
 	})
 }
