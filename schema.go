@@ -2758,21 +2758,29 @@ func (s ECSCluster) CfnResourceType() string {
 // see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-service.html
 type ECSService struct {
 	// The name or Amazon Resource Name (ARN) of the cluster that you want to
-	// run your service on. If you do not specify a cluster, Amazon ECS uses
-	// the default cluster.
+	// run your Amazon ECS service on. If you do not specify a cluster,
+	// Amazon ECS uses the default cluster.
 	Cluster *StringExpr `json:"Cluster,omitempty"`
 
 	// Configures how many tasks run during a deployment.
 	DeploymentConfiguration *EC2ContainerServiceServiceDeploymentConfiguration `json:"DeploymentConfiguration,omitempty"`
 
-	// The number of simultaneous tasks, which you specify by using the
-	// TaskDefinition property, that you want to run on the cluster.
+	// The placement constraints for the tasks in the service.
+	PlacementConstraints *EC2ContainerServiceServicePlacementConstraintList `json:"PlacementConstraints,omitempty"`
+
+	// The placement strategies that determine how tasks for the service are
+	// placed.
+	PlacementStrategies *EC2ContainerServiceServicePlacementStrategiesList `json:"PlacementStrategies,omitempty"`
+
+	// The number of simultaneous tasks that you want to run on the cluster.
+	// Specify the tasks with the TaskDefinition property.
 	DesiredCount *IntegerExpr `json:"DesiredCount,omitempty"`
 
-	// A list of load balancer objects to associate with the cluster. For
-	// information about the number of load balancers you can specify per
-	// service, see Service Load Balancing in the Amazon EC2 Container
-	// Service Developer Guide.
+	// A list of load balancer objects to associate with the cluster. If you
+	// specify the Role property, LoadBalancers must be specified as well.
+	// For information about the number of load balancers that you can
+	// specify per service, see Service Load Balancing in the Amazon EC2
+	// Container Service Developer Guide.
 	LoadBalancers *EC2ContainerServiceServiceLoadBalancersList `json:"LoadBalancers,omitempty"`
 
 	// The name or ARN of an AWS Identity and Access Management (IAM) role
@@ -2780,12 +2788,19 @@ type ECSService struct {
 	// balancer.
 	Role *StringExpr `json:"Role,omitempty"`
 
+	// The name of your service. The name is limited to 255 letters
+	// (uppercase and lowercase), numbers, hyphens, and underscores. Service
+	// names must be unique within a cluster, but you can have similarly
+	// named services in multiple clusters within a region or across multiple
+	// regions.
+	ServiceName *StringExpr `json:"ServiceName,omitempty"`
+
 	// The ARN of the task definition (including the revision number) that
 	// you want to run on the cluster, such as
 	// arn:aws:ecs:us-east-1:123456789012:task-definition/mytask:3. You can't
 	// use :latest to specify a revision because it's ambiguous. For example,
-	// if AWS CloudFormation needed to rollback an update, it wouldn't know
-	// which revision to rollback to.
+	// if AWS CloudFormation needed to roll back an update, it wouldn't know
+	// which revision to roll back to.
 	TaskDefinition *StringExpr `json:"TaskDefinition,omitempty"`
 }
 
@@ -2798,9 +2813,9 @@ func (s ECSService) CfnResourceType() string {
 //
 // see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-ecs-taskdefinition.html
 type ECSTaskDefinition struct {
-	// A list of container definitions in JSON format that describe the
-	// containers that make up your task.
-	ContainerDefinitions *EC2ContainerServiceTaskDefinitionContainerDefinitionsList `json:"ContainerDefinitions,omitempty"`
+	// A list of volume definitions in JSON format for the volumes that you
+	// can use in your container definitions.
+	Volumes *EC2ContainerServiceTaskDefinitionVolumesList `json:"Volumes,omitempty"`
 
 	// The name of a family that this task definition is registered to. A
 	// family groups multiple versions of a task definition. Amazon ECS gives
@@ -2821,9 +2836,12 @@ type ECSTaskDefinition struct {
 	// Tasks in the Amazon EC2 Container Service Developer Guide.
 	TaskRoleArn *StringExpr `json:"TaskRoleArn,omitempty"`
 
-	// A list of volume definitions in JSON format for volumes that you can
-	// use in your container definitions.
-	Volumes *EC2ContainerServiceTaskDefinitionVolumesList `json:"Volumes,omitempty"`
+	// The placement constraints for the tasks in the service.
+	PlacementConstraints *EC2ContainerServiceServicePlacementConstraint `json:"PlacementConstraints,omitempty"`
+
+	// A list of container definitions in JSON format that describes the
+	// containers that make up your task.
+	ContainerDefinitions *EC2ContainerServiceTaskDefinitionContainerDefinitionsList `json:"ContainerDefinitions,omitempty"`
 }
 
 // CfnResourceType returns AWS::ECS::TaskDefinition to implement the ResourceProperties interface
@@ -10859,6 +10877,75 @@ func (l *EC2ContainerServiceServiceDeploymentConfigurationList) UnmarshalJSON(bu
 	err := json.Unmarshal(buf, &list)
 	if err == nil {
 		*l = EC2ContainerServiceServiceDeploymentConfigurationList(list)
+		return nil
+	}
+	return err
+}
+
+// EC2ContainerServiceServicePlacementConstraint represents Amazon EC2 Container Service Service PlacementConstraint
+//
+// see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-service-placementconstraints-placementconstraint.html
+type EC2ContainerServiceServicePlacementConstraint struct {
+	// The type of constraint: distinctInstance or memberOf.
+	Type *StringExpr `json:"Type,omitempty"`
+
+	// A cluster query language expression to apply to the constraint. If the
+	// constraint type is distinctInstance, you can't specify an expression.
+	// For more information, see Cluster Query Language in the Amazon EC2
+	// Container Service Developer Guide.
+	Expression *StringExpr `json:"Expression,omitempty"`
+}
+
+// EC2ContainerServiceServicePlacementConstraintList represents a list of EC2ContainerServiceServicePlacementConstraint
+type EC2ContainerServiceServicePlacementConstraintList []EC2ContainerServiceServicePlacementConstraint
+
+// UnmarshalJSON sets the object from the provided JSON representation
+func (l *EC2ContainerServiceServicePlacementConstraintList) UnmarshalJSON(buf []byte) error {
+	// Cloudformation allows a single object when a list of objects is expected
+	item := EC2ContainerServiceServicePlacementConstraint{}
+	if err := json.Unmarshal(buf, &item); err == nil {
+		*l = EC2ContainerServiceServicePlacementConstraintList{item}
+		return nil
+	}
+	list := []EC2ContainerServiceServicePlacementConstraint{}
+	err := json.Unmarshal(buf, &list)
+	if err == nil {
+		*l = EC2ContainerServiceServicePlacementConstraintList(list)
+		return nil
+	}
+	return err
+}
+
+// EC2ContainerServiceServicePlacementStrategies represents Amazon EC2 Container Service Service PlacementStrategies
+//
+// see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-service-placementstrategies-placementstrategy.html
+type EC2ContainerServiceServicePlacementStrategies struct {
+	// The type of placement strategy. Can be one of the following values:
+	// random, spread, or binpack.
+	Type *StringExpr `json:"Type,omitempty"`
+
+	// The field to apply the placement strategy against. For the spread
+	// placement strategy, valid values are instanceId (or host, which has
+	// the same effect), or any platform or custom attribute that is applied
+	// to a container instance, such as attribute:ecs.availability-zone.
+	Field *StringExpr `json:"Field,omitempty"`
+}
+
+// EC2ContainerServiceServicePlacementStrategiesList represents a list of EC2ContainerServiceServicePlacementStrategies
+type EC2ContainerServiceServicePlacementStrategiesList []EC2ContainerServiceServicePlacementStrategies
+
+// UnmarshalJSON sets the object from the provided JSON representation
+func (l *EC2ContainerServiceServicePlacementStrategiesList) UnmarshalJSON(buf []byte) error {
+	// Cloudformation allows a single object when a list of objects is expected
+	item := EC2ContainerServiceServicePlacementStrategies{}
+	if err := json.Unmarshal(buf, &item); err == nil {
+		*l = EC2ContainerServiceServicePlacementStrategiesList{item}
+		return nil
+	}
+	list := []EC2ContainerServiceServicePlacementStrategies{}
+	err := json.Unmarshal(buf, &list)
+	if err == nil {
+		*l = EC2ContainerServiceServicePlacementStrategiesList(list)
 		return nil
 	}
 	return err
