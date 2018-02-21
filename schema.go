@@ -2776,6 +2776,10 @@ type ECSService struct {
 	// Specify the tasks with the TaskDefinition property.
 	DesiredCount *IntegerExpr `json:"DesiredCount,omitempty"`
 
+	// The length of time in seconds after a new container comes into
+	// service before ECS starts checking its health.
+	HealthCheckGracePeriodSeconds *IntegerExpr `json:"HealthCheckGracePeriodSeconds,omitempty"`
+
 	// A list of load balancer objects to associate with the cluster. If you
 	// specify the Role property, LoadBalancers must be specified as well.
 	// For information about the number of load balancers that you can
