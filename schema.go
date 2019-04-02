@@ -3517,6 +3517,9 @@ type ElasticLoadBalancingV2LoadBalancer struct {
 	// Specifies an arbitrary set of tags (key–value pairs) to associate
 	// with this load balancer. Use tags to manage your resources.
 	Tags []ResourceTag `json:"Tags,omitempty"`
+
+	// Type docs: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html#cfn-elasticloadbalancingv2-loadbalancer-type
+	Type *StringExpr `json:"Type,omitempty"`
 }
 
 // CfnResourceType returns AWS::ElasticLoadBalancingV2::LoadBalancer to implement the ResourceProperties interface
