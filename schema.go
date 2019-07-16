@@ -1099,7 +1099,7 @@ type CloudWatchAlarm struct {
 	MetricName *StringExpr `json:"MetricName,omitempty"`
 
 	// The list of MetricDataQuery when using math expressions
-	Metrics *CloudWatchMetricDataQueryList `json:Metrics,omitempty`
+	Metrics *CloudWatchMetricDataQueryList `json:"Metrics,omitempty"`
 
 	// The namespace for the alarm's associated metric.
 	Namespace *StringExpr `json:"Namespace,omitempty"`
