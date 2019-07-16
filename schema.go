@@ -8193,11 +8193,26 @@ func (l *CloudWatchMetricDimensionList) UnmarshalJSON(buf []byte) error {
 	return err
 }
 
+// Metric represents CloudWatch Metric Stat Property Type
+//
+// see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metric.html
+type Metric struct {
+	Dimensions *CloudWatchMetricDimensionList `json:"Dimensions,omitempty"`
+	MetricName *StringExpr                    `json:"MetricName,omitempty"`
+	Namespace  *StringExpr                    `json:"Namespace,omitempty"`
+}
+
+/*
+ "Dimensions" : [ Dimension, ... ],
+  "MetricName" : String,
+  "Namespace" : String
+*/
+
 // MetricStat represents CloudWatch Metric Stat Property Type
 //
 // see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricstat.html
 type MetricStat struct {
-	Metric *StringExpr  `json:"Metric,omitempty"`
+	Metric *Metric      `json:"Metric,omitempty"`
 	Period *IntegerExpr `json:"Period,omitempty"`
 	Stat   *StringExpr  `json:"Stat,omitempty"`
 	Unit   *StringExpr  `json:"Unit,omitempty"`
