@@ -1098,6 +1098,9 @@ type CloudWatchAlarm struct {
 	// Dimensions, and Metrics Reference in the Amazon CloudWatch User Guide.
 	MetricName *StringExpr `json:"MetricName,omitempty"`
 
+	// The list of MetricDataQuery when using math expressions
+	Metrics *CloudWatchMetricDataQueryList `json:"Metrics,omitempty"`
+
 	// The namespace for the alarm's associated metric.
 	Namespace *StringExpr `json:"Namespace,omitempty"`
 
@@ -8185,6 +8188,56 @@ func (l *CloudWatchMetricDimensionList) UnmarshalJSON(buf []byte) error {
 	err := json.Unmarshal(buf, &list)
 	if err == nil {
 		*l = CloudWatchMetricDimensionList(list)
+		return nil
+	}
+	return err
+}
+
+// Metric represents CloudWatch Metric Stat Property Type
+//
+// see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metric.html
+type Metric struct {
+	Dimensions *CloudWatchMetricDimensionList `json:"Dimensions,omitempty"`
+	MetricName *StringExpr                    `json:"MetricName,omitempty"`
+	Namespace  *StringExpr                    `json:"Namespace,omitempty"`
+}
+
+// MetricStat represents CloudWatch Metric Stat Property Type
+//
+// see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricstat.html
+type MetricStat struct {
+	Metric *Metric      `json:"Metric,omitempty"`
+	Period *IntegerExpr `json:"Period,omitempty"`
+	Stat   *StringExpr  `json:"Stat,omitempty"`
+	Unit   *StringExpr  `json:"Unit,omitempty"`
+}
+
+// CloudWatchMetricDataQuery represents CloudWatch Data Query Property Type
+//
+// see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricdataquery.html
+type CloudWatchMetricDataQuery struct {
+	Expression *StringExpr `json:"Expression,omitempty"`
+	Id         *StringExpr `json:"Id,omitempty"`
+	Label      *StringExpr `json:"Label,omitempty"`
+	MetricStat *MetricStat `json:"MetricStat,omitempty"`
+	ReturnData *BoolExpr   `json:"ReturnData,omitempty"`
+}
+
+// CloudWatchMetricDataQueryList represents a list of CloudWatchMetricDimension
+type CloudWatchMetricDataQueryList []CloudWatchMetricDataQuery
+
+// UnmarshalJSON sets the object from the provided JSON representation
+func (l *CloudWatchMetricDataQueryList) UnmarshalJSON(buf []byte) error {
+	// Cloudformation allows a single object when a list of objects is expected
+	item := CloudWatchMetricDataQuery{}
+	if err := json.Unmarshal(buf, &item); err == nil {
+		*l = CloudWatchMetricDataQueryList{item}
+		return nil
+	}
+	list := []CloudWatchMetricDataQuery{}
+	err := json.Unmarshal(buf, &list)
+	if err == nil {
+		*l = CloudWatchMetricDataQueryList(list)
 		return nil
 	}
 	return err
