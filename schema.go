@@ -8202,12 +8202,6 @@ type Metric struct {
 	Namespace  *StringExpr                    `json:"Namespace,omitempty"`
 }
 
-/*
- "Dimensions" : [ Dimension, ... ],
-  "MetricName" : String,
-  "Namespace" : String
-*/
-
 // MetricStat represents CloudWatch Metric Stat Property Type
 //
 // see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-alarm-metricstat.html
