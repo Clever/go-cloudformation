@@ -1,7 +1,9 @@
 package cloudformation
 
-import "time"
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 // CustomResourceProvider allows extend the NewResourceByType factory method
 // with their own resource types.
@@ -12053,12 +12055,29 @@ func (l *ElasticLoadBalancingListenerCertificatesList) UnmarshalJSON(buf []byte)
 	return err
 }
 
+type ElasticLoadBalancingListenerDefaultActionsFixedResponseConfig struct {
+	// The content type.
+	// Valid Values: text/plain | text/css | text/html | application/javascript | application/json
+	ContentType *StringExpr `json:"ContentType,omitempty"`
+
+	// The message.
+	MessageBody *StringExpr `json:"MessageBody,omitempty"`
+
+	// The HTTP response code (2XX, 4XX, or 5XX).
+	StatusCode *StringExpr `json:"StatusCode,omitempty"`
+}
+
 // ElasticLoadBalancingListenerDefaultActions represents Elastic Load Balancing Listener DefaultActions
 //
 // see http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-elasticloadbalancingv2-listener-defaultactions.html
 type ElasticLoadBalancingListenerDefaultActions struct {
-	// The Amazon Resource Name (ARN) of the target group to which Elastic
-	// Load Balancing routes the traffic.
+	// [Application Load Balancer] Information for creating an action that returns a custom HTTP response.
+	// Specify only when Type is fixed-response.
+	FixedResponseConfig *ElasticLoadBalancingListenerDefaultActionsFixedResponseConfig `json:"FixedResponseConfig,omitempty"`
+
+	// The Amazon Resource Name (ARN) of the target group.
+	// Specify only when Type is forward and you want to route to a single target group.
+	// To route to one or more target groups, use ForwardConfig instead.
 	TargetGroupArn *StringExpr `json:"TargetGroupArn,omitempty"`
 
 	// The type of action. For valid values, see the Type contents for the
